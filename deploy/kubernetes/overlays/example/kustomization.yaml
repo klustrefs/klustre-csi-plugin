@@ -1,0 +1,29 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+configMapGenerator:
+  - name: klustre-csi-settings
+    behavior: replace
+    literals:
+      - csiEndpoint=unix:///var/lib/kubelet/plugins/klustrefs.csi.k8s.io/csi.sock
+      - pluginDir=/var/lib/kubelet/plugins/klustrefs.csi.k8s.io
+      - driverRegistrationSock=/var/lib/kubelet/plugins/klustrefs.csi.k8s.io/csi.sock
+      - registrationDir=/var/lib/kubelet/plugins_registry
+      - logLevel=debug
+      - nodeImage=ghcr.io/klustrefs/klustre-csi:v0.1.0
+      - registrarImage=registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.1
+      - nodeDaemonsetName=klustre-csi-node
+      - nodeServiceAccount=klustre-csi-node
+      - storageClassName=klustre-lustre
+      - pvName=klustre-lustre-pv
+      - pvHandle=lustre-volume-overlay
+      - pvTarget=10.10.0.5@tcp:/lustre/overlay
+      - pvcName=klustre-lustre-pvc
+      - pvCapacity=2Ti
+      - pvcRequest=2Ti
