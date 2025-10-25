@@ -1,0 +1,16 @@
+# .dockerignore
+target/
+.git/
+.github/
+*.md
+README.md
+LICENSE
+.gitignore
+.dockerignore
+charts/
+examples/
+test/
+*.txt
+.vscode/
+.idea/
+tooling/
