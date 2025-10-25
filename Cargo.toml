@@ -3,6 +3,10 @@ name = "klustrefs"
 version = "0.1.0"
 edition = "2024"
 
+[[bin]]
+name = "klustrefs-csi-driver"
+path = "src/main.rs"
+
 [dependencies]
 # Async runtime
 tokio = { version = "1.0", features = ["macros", "rt-multi-thread", "fs", "process"] }
