@@ -27,8 +27,8 @@ ENV RUSTFLAGS='-C target-feature=+crt-static -C link-arg=-static'
 RUN cargo build --release --target x86_64-unknown-linux-musl
 
 # Verify it's static
-RUN file /build/target/x86_64-unknown-linux-musl/release/klustrefs && \
-    ldd /build/target/x86_64-unknown-linux-musl/release/klustrefs || true
+RUN file /build/target/x86_64-unknown-linux-musl/release/klustrefs-csi-driver && \
+    ldd /build/target/x86_64-unknown-linux-musl/release/klustrefs-csi-driver || true
 
 # Runtime stage - minimal Alpine
 FROM alpine:3.22
@@ -41,11 +41,11 @@ RUN apk add --no-cache \
 
 # Copy static binary from builder
 COPY --from=builder \
-    /build/target/x86_64-unknown-linux-musl/release/klustrefs \
-    /usr/local/bin/klustrefs
+    /build/target/x86_64-unknown-linux-musl/release/klustrefs-csi-driver \
+    /usr/local/bin/klustrefs-csi-driver
 
 # Set permissions and create socket directory
-RUN chmod +x /usr/local/bin/klustrefs && \
+RUN chmod +x /usr/local/bin/klustrefs-csi-driver && \
     mkdir -p /csi
 
 # Add non-root user (optional, CSI needs root for mount)
@@ -53,7 +53,7 @@ RUN chmod +x /usr/local/bin/klustrefs && \
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD ["/usr/local/bin/klustrefs", "--help"]
+  CMD ["/usr/local/bin/klustrefs-csi-driver", "--help"]
 
-ENTRYPOINT ["/usr/local/bin/klustrefs"]
+ENTRYPOINT ["/usr/local/bin/klustrefs-csi-driver"]
 CMD ["--help"]
