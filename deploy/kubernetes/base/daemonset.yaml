@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: klustre-csi-node
+  namespace: klustre-system
+spec:
+  selector:
+    matchLabels:
+      app: klustre-csi-node
+  template:
+    metadata:
+      labels:
+        app: klustre-csi-node
+    spec:
+      serviceAccountName: klustre-csi-node
+      containers:
+        - name: klustre-csi
+          image: ghcr.io/klustrefs/klustre-csi:v0.1.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: KUBE_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
+            - name: DRIVER_NAME
+              value: klustrefs.csi.k8s.io
+            - name: CSI_ENDPOINT
+              valueFrom:
+                configMapKeyRef:
+                  name: klustre-csi-settings
+                  key: csiEndpoint
+            - name: LOG_LEVEL
+              valueFrom:
+                configMapKeyRef:
+                  name: klustre-csi-settings
+                  key: logLevel
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - name: plugin-dir
+              mountPath: /var/lib/kubelet/plugins/klustrefs.csi.k8s.io
+            - name: pods-mount-dir
+              mountPath: /var/lib/kubelet/pods
+              mountPropagation: Bidirectional
+        - name: node-driver-registrar
+          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.1
+          args:
+            - "--v=2"
+            - "--csi-address=/csi/csi.sock"
+            - "--kubelet-registration-path=/var/lib/kubelet/plugins/klustrefs.csi.k8s.io/csi.sock"
+          env:
+            - name: DRIVER_REG_SOCK
+              valueFrom:
+                configMapKeyRef:
+                  name: klustre-csi-settings
+                  key: driverRegistrationSock
+          volumeMounts:
+            - name: plugin-dir
+              mountPath: /csi
+            - name: registration-dir
+              mountPath: /registration
+      volumes:
+        - name: plugin-dir
+          hostPath:
+            path: /var/lib/kubelet/plugins/klustrefs.csi.k8s.io
+            type: DirectoryOrCreate
+        - name: registration-dir
+          hostPath:
+            path: /var/lib/kubelet/plugins_registry
+            type: Directory
+        - name: pods-mount-dir
+          hostPath:
+            path: /var/lib/kubelet/pods
+            type: Directory

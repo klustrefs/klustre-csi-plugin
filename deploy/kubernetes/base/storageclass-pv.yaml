@@ -1,0 +1,41 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: klustre-static
+provisioner: klustrefs.csi.k8s.io
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Retain
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: klustre-static-pv
+spec:
+  capacity:
+    storage: 1Ti
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: klustre-static
+  csi:
+    driver: klustrefs.csi.k8s.io
+    volumeHandle: lustre-volume-example
+    volumeAttributes:
+      target: 10.0.0.1@tcp:/lustre/example
+      # Additional attributes can be added based on driver requirements.
+  mountOptions:
+    - flock
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: klustre-static-pvc
+  namespace: klustre-system
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Ti
+  storageClassName: klustre-static
+  volumeName: klustre-static-pv
