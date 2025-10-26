@@ -82,13 +82,15 @@ impl LustreClient {
             if parts.len() >= 4 {
                 // Try to parse size columns (rough estimation)
                 if let Some(size_str) = parts.get(1)
-                    && let Some(bytes) = parse_size_string(size_str) {
-                        total_bytes += bytes;
-                    }
+                    && let Some(bytes) = parse_size_string(size_str)
+                {
+                    total_bytes += bytes;
+                }
                 if let Some(used_str) = parts.get(2)
-                    && let Some(bytes) = parse_size_string(used_str) {
-                        used_bytes += bytes;
-                    }
+                    && let Some(bytes) = parse_size_string(used_str)
+                {
+                    used_bytes += bytes;
+                }
             }
         }
 
