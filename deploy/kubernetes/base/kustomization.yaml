@@ -10,64 +10,16 @@ resources:
   - daemonset.yaml
   - storageclass-pv.yaml
 
-generatorOptions:
-  disableNameSuffixHash: true
-
+# Simplified ConfigMap - only for user-configurable values
 configMapGenerator:
   - name: klustre-csi-settings
     literals:
-      - csiEndpoint=unix:///var/lib/kubelet/plugins/klustrefs.csi.k8s.io/csi.sock
-      - pluginDir=/var/lib/kubelet/plugins/klustrefs.csi.k8s.io
-      - driverRegistrationSock=/var/lib/kubelet/plugins/klustrefs.csi.k8s.io/csi.sock
-      - registrationDir=/var/lib/kubelet/plugins_registry
       - logLevel=info
-      - nodeImage=ghcr.io/klustrefs/klustre-csi:v0.1.0
+      - nodeImage=ghcr.io/klustrefs/klustre-csi:0.0.1
       - registrarImage=registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.1
-      - nodeDaemonsetName=klustre-csi-node
-      - nodeServiceAccount=klustre-csi-node
-      - storageClassName=klustre-static
-      - pvName=klustre-static-pv
-      - pvHandle=lustre-volume-example
-      - pvTarget=10.0.0.1@tcp:/lustre/example
-      - pvcName=klustre-static-pvc
-      - pvCapacity=1Ti
-      - pvcRequest=1Ti
 
 replacements:
-  - source:
-      kind: ConfigMap
-      name: klustre-csi-settings
-      fieldPath: data.nodeServiceAccount
-    targets:
-      - select:
-          kind: ServiceAccount
-        fieldPaths:
-          - metadata.name
-      - select:
-          kind: ClusterRole
-        fieldPaths:
-          - metadata.name
-      - select:
-          kind: ClusterRoleBinding
-        fieldPaths:
-          - metadata.name
-          - roleRef.name
-          - subjects.[kind=ServiceAccount].name
-      - select:
-          kind: DaemonSet
-        fieldPaths:
-          - spec.template.spec.serviceAccountName
-  - source:
-      kind: ConfigMap
-      name: klustre-csi-settings
-      fieldPath: data.nodeDaemonsetName
-    targets:
-      - select:
-          kind: DaemonSet
-        fieldPaths:
-          - metadata.name
-          - spec.selector.matchLabels.app
-          - spec.template.metadata.labels.app
+  # Image versions from ConfigMap (optional, can hardcode instead)
   - source:
       kind: ConfigMap
       name: klustre-csi-settings
@@ -75,8 +27,10 @@ replacements:
     targets:
       - select:
           kind: DaemonSet
+          name: klustre-csi-node
         fieldPaths:
           - spec.template.spec.containers.[name=klustre-csi].image
+
   - source:
       kind: ConfigMap
       name: klustre-csi-settings
@@ -84,99 +38,17 @@ replacements:
     targets:
       - select:
           kind: DaemonSet
+          name: klustre-csi-node
         fieldPaths:
           - spec.template.spec.containers.[name=node-driver-registrar].image
+
   - source:
       kind: ConfigMap
       name: klustre-csi-settings
-      fieldPath: data.pluginDir
+      fieldPath: data.logLevel
     targets:
       - select:
           kind: DaemonSet
+          name: klustre-csi-node
         fieldPaths:
-          - spec.template.spec.containers.[name=klustre-csi].volumeMounts.[name=plugin-dir].mountPath
-          - spec.template.spec.volumes.[name=plugin-dir].hostPath.path
-  - source:
-      kind: ConfigMap
-      name: klustre-csi-settings
-      fieldPath: data.registrationDir
-    targets:
-      - select:
-          kind: DaemonSet
-        fieldPaths:
-          - spec.template.spec.volumes.[name=registration-dir].hostPath.path
-  - source:
-      kind: ConfigMap
-      name: klustre-csi-settings
-      fieldPath: data.storageClassName
-    targets:
-      - select:
-          kind: StorageClass
-        fieldPaths:
-          - metadata.name
-      - select:
-          kind: PersistentVolume
-        fieldPaths:
-          - spec.storageClassName
-      - select:
-          kind: PersistentVolumeClaim
-        fieldPaths:
-          - spec.storageClassName
-  - source:
-      kind: ConfigMap
-      name: klustre-csi-settings
-      fieldPath: data.pvName
-    targets:
-      - select:
-          kind: PersistentVolume
-        fieldPaths:
-          - metadata.name
-      - select:
-          kind: PersistentVolumeClaim
-        fieldPaths:
-          - spec.volumeName
-  - source:
-      kind: ConfigMap
-      name: klustre-csi-settings
-      fieldPath: data.pvHandle
-    targets:
-      - select:
-          kind: PersistentVolume
-        fieldPaths:
-          - spec.csi.volumeHandle
-  - source:
-      kind: ConfigMap
-      name: klustre-csi-settings
-      fieldPath: data.pvTarget
-    targets:
-      - select:
-          kind: PersistentVolume
-        fieldPaths:
-          - spec.csi.volumeAttributes.target
-  - source:
-      kind: ConfigMap
-      name: klustre-csi-settings
-      fieldPath: data.pvCapacity
-    targets:
-      - select:
-          kind: PersistentVolume
-        fieldPaths:
-          - spec.capacity.storage
-  - source:
-      kind: ConfigMap
-      name: klustre-csi-settings
-      fieldPath: data.pvcName
-    targets:
-      - select:
-          kind: PersistentVolumeClaim
-        fieldPaths:
-          - metadata.name
-  - source:
-      kind: ConfigMap
-      name: klustre-csi-settings
-      fieldPath: data.pvcRequest
-    targets:
-      - select:
-          kind: PersistentVolumeClaim
-        fieldPaths:
-          - spec.resources.requests.storage
+          - spec.template.spec.containers.[name=klustre-csi].env.[name=LOG_LEVEL].value
