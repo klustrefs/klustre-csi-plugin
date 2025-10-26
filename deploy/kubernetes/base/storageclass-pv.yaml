@@ -5,6 +5,14 @@ metadata:
 provisioner: klustrefs.csi.k8s.io
 volumeBindingMode: WaitForFirstConsumer
 reclaimPolicy: Retain
+mountOptions:
+  - flock
+  - user_xattr
+allowedTopologies:
+  - matchLabelExpressions:
+      - key: klustre.csi.k8s.io/lustre-client
+        values:
+          - "true"
 ---
 apiVersion: v1
 kind: PersistentVolume
@@ -12,7 +20,7 @@ metadata:
   name: klustre-static-pv
 spec:
   capacity:
-    storage: 1Ti
+    storage: 96Gi
   accessModes:
     - ReadWriteMany
   persistentVolumeReclaimPolicy: Retain
@@ -21,8 +29,7 @@ spec:
     driver: klustrefs.csi.k8s.io
     volumeHandle: lustre-volume-example
     volumeAttributes:
-      target: 10.0.0.1@tcp:/lustre/example
-      # Additional attributes can be added based on driver requirements.
+      source: YOUR_IP_FOR_LUSTRE@tcp:/testfs
   mountOptions:
     - flock
 ---
@@ -36,6 +43,6 @@ spec:
     - ReadWriteMany
   resources:
     requests:
-      storage: 1Ti
+      storage: 96Gi
   storageClassName: klustre-static
   volumeName: klustre-static-pv
