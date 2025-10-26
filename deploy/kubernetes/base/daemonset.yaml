@@ -35,6 +35,9 @@ spec:
         - name: klustre-csi
           image: ghcr.io/klustrefs/klustre-csi:0.0.1
           imagePullPolicy: IfNotPresent
+# for local images
+#          image: klustrefs-csi:local
+#          imagePullPolicy: Never
 
           args:
             - --node-id=$(KUBE_NODE_NAME)
@@ -50,6 +53,10 @@ spec:
               value: unix:///var/lib/kubelet/plugins/klustrefs.csi.k8s.io/csi.sock
             - name: LOG_LEVEL
               value: info
+            - name: PATH
+              value: /host/usr/sbin:/host/sbin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+            - name: LD_LIBRARY_PATH
+              value: /host/lib:/host/lib64:/host/usr/lib:/host/usr/lib64
 
           securityContext:
             privileged: true
@@ -83,6 +90,18 @@ spec:
               mountPropagation: Bidirectional
             - name: device-dir
               mountPath: /dev
+            - name: host-sbin
+              mountPath: /host/sbin
+              readOnly: true
+            - name: host-usr-sbin
+              mountPath: /host/usr/sbin
+              readOnly: true
+            - name: host-lib
+              mountPath: /host/lib
+              readOnly: true
+            - name: host-lib64
+              mountPath: /host/lib64
+              readOnly: true
 
         - name: node-driver-registrar
           image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.1
@@ -122,3 +141,17 @@ spec:
           hostPath:
             path: /dev
             type: Directory
+        - name: host-sbin
+          hostPath:
+            path: /sbin
+            type: Directory
+        - name: host-usr-sbin
+          hostPath:
+            path: /usr/sbin
+            type: Directory
+        - name: host-lib
+          hostPath:
+            path: /lib
+        - name: host-lib64
+          hostPath:
+            path: /lib64
