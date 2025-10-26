@@ -16,6 +16,8 @@ configMapGenerator:
     literals:
       - logLevel=info
       - nodeImage=ghcr.io/klustrefs/klustre-csi:0.0.1
+# for local image
+#      - nodeImage=klustrefs-csi:local
       - registrarImage=registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.1
 
 replacements:
