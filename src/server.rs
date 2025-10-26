@@ -44,10 +44,11 @@ impl CSIServer {
         }
 
         if let Some(parent) = Path::new(socket_path).parent()
-            && !parent.exists() {
-                info!("Creating socket directory: {}", parent.display());
-                fs::create_dir_all(parent).await?;
-            }
+            && !parent.exists()
+        {
+            info!("Creating socket directory: {}", parent.display());
+            fs::create_dir_all(parent).await?;
+        }
 
         info!("Binding to Unix socket: {}", socket_path);
         let uds = UnixListener::bind(socket_path)?;
