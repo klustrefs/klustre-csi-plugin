@@ -3,6 +3,9 @@ kind: DaemonSet
 metadata:
   name: klustre-csi-node
   namespace: klustre-system
+  labels:
+    app.kubernetes.io/name: klustre-csi
+    app.kubernetes.io/component: node
 spec:
   selector:
     matchLabels:
@@ -11,55 +14,97 @@ spec:
     metadata:
       labels:
         app: klustre-csi-node
+        app.kubernetes.io/name: klustre-csi
     spec:
       serviceAccountName: klustre-csi-node
+      hostNetwork: true
+      hostPID: true
+      dnsPolicy: ClusterFirstWithHostNet
+      priorityClassName: system-node-critical
+
+#      nodeSelector:
+#        klustre.csi.k8s.io/lustre-client: "true"
+
+      tolerations:
+        - operator: Exists
+
+      imagePullSecrets:
+        - name: ghcr-secret
+
       containers:
         - name: klustre-csi
-          image: ghcr.io/klustrefs/klustre-csi:v0.1.0
+          image: ghcr.io/klustrefs/klustre-csi:0.0.1
           imagePullPolicy: IfNotPresent
+
+          args:
+            - --node-id=$(KUBE_NODE_NAME)
+            - --endpoint=$(CSI_ENDPOINT)
+            - --log-level=$(LOG_LEVEL)
+
           env:
             - name: KUBE_NODE_NAME
               valueFrom:
                 fieldRef:
-                  apiVersion: v1
                   fieldPath: spec.nodeName
-            - name: DRIVER_NAME
-              value: klustrefs.csi.k8s.io
             - name: CSI_ENDPOINT
-              valueFrom:
-                configMapKeyRef:
-                  name: klustre-csi-settings
-                  key: csiEndpoint
+              value: unix:///var/lib/kubelet/plugins/klustrefs.csi.k8s.io/csi.sock
             - name: LOG_LEVEL
-              valueFrom:
-                configMapKeyRef:
-                  name: klustre-csi-settings
-                  key: logLevel
+              value: info
+
           securityContext:
             privileged: true
+            capabilities:
+              add: ["SYS_ADMIN"]
+            allowPrivilegeEscalation: true
+
+          resources:
+            limits:
+              cpu: 200m
+              memory: 200Mi
+            requests:
+              cpu: 50m
+              memory: 50Mi
+
+          livenessProbe:
+            exec:
+              command:
+                - /usr/local/bin/klustrefs-csi-driver
+                - --help
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 5
+
           volumeMounts:
             - name: plugin-dir
               mountPath: /var/lib/kubelet/plugins/klustrefs.csi.k8s.io
             - name: pods-mount-dir
               mountPath: /var/lib/kubelet/pods
               mountPropagation: Bidirectional
+            - name: device-dir
+              mountPath: /dev
+
         - name: node-driver-registrar
           image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.1
           args:
-            - "--v=2"
-            - "--csi-address=/csi/csi.sock"
-            - "--kubelet-registration-path=/var/lib/kubelet/plugins/klustrefs.csi.k8s.io/csi.sock"
-          env:
-            - name: DRIVER_REG_SOCK
-              valueFrom:
-                configMapKeyRef:
-                  name: klustre-csi-settings
-                  key: driverRegistrationSock
+            - --v=2
+            - --csi-address=/csi/csi.sock
+            - --kubelet-registration-path=/var/lib/kubelet/plugins/klustrefs.csi.k8s.io/csi.sock
+
+          resources:
+            limits:
+              cpu: 200m
+              memory: 200Mi
+            requests:
+              cpu: 100m
+              memory: 200Mi
+
           volumeMounts:
             - name: plugin-dir
               mountPath: /csi
             - name: registration-dir
               mountPath: /registration
+
       volumes:
         - name: plugin-dir
           hostPath:
@@ -72,4 +117,8 @@ spec:
         - name: pods-mount-dir
           hostPath:
             path: /var/lib/kubelet/pods
+            type: Directory
+        - name: device-dir
+          hostPath:
+            path: /dev
             type: Directory
