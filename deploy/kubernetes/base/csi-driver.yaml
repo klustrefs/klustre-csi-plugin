@@ -4,6 +4,6 @@ metadata:
   name: klustrefs.csi.k8s.io
 spec:
   attachRequired: false
-  podInfoOnMount: false
+  podInfoOnMount: true
   volumeLifecycleModes:
     - Persistent
