@@ -16,7 +16,7 @@ configMapGenerator:
       - driverRegistrationSock=/var/lib/kubelet/plugins/klustrefs.csi.k8s.io/csi.sock
       - registrationDir=/var/lib/kubelet/plugins_registry
       - logLevel=debug
-      - nodeImage=ghcr.io/klustrefs/klustre-csi:v0.1.0
+      - nodeImage=ghcr.io/klustrefs/klustre-csi-plugin:v0.1.0
       - registrarImage=registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.1
       - nodeDaemonsetName=klustre-csi-node
       - nodeServiceAccount=klustre-csi-node

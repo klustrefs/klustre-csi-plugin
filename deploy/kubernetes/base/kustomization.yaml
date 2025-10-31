@@ -15,9 +15,9 @@ configMapGenerator:
   - name: klustre-csi-settings
     literals:
       - logLevel=info
-      - nodeImage=ghcr.io/klustrefs/klustre-csi:0.0.1
+      - nodeImage=ghcr.io/klustrefs/klustre-csi-plugin:0.0.1
 # for local image
-#      - nodeImage=klustrefs-csi:local
+#      - nodeImage=klustrefs-csi-plugin:local
       - registrarImage=registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.1
 
 replacements:

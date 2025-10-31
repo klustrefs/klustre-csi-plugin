@@ -33,10 +33,10 @@ spec:
 
       containers:
         - name: klustre-csi
-          image: ghcr.io/klustrefs/klustre-csi:0.0.1
+          image: ghcr.io/klustrefs/klustre-csi-plugin:0.0.1
           imagePullPolicy: IfNotPresent
 # for local images
-#          image: klustrefs-csi:local
+#          image: klustrefs-csi-plugin:local
 #          imagePullPolicy: Never
 
           args:
@@ -75,7 +75,7 @@ spec:
           livenessProbe:
             exec:
               command:
-                - /usr/local/bin/klustrefs-csi-driver
+                - /usr/local/bin/klustrefs-csi-plugin
                 - --help
             initialDelaySeconds: 10
             periodSeconds: 30

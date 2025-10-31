@@ -14,7 +14,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: klustrefs/klustre-csi
+  IMAGE_NAME: klustrefs/klustre-csi-plugin
   DEFAULT_IMAGE_TAG: v0.0.1
 
 jobs:
