@@ -69,6 +69,13 @@ make build
 
 The `Makefile` wraps `cargo build --release`; ensure `protoc` is on your `PATH` (or set `PROTOC=/custom/bin/protoc make build`) before invoking it.
 
+### Lint the code
+```bash
+make lint
+```
+
+This runs `cargo clippy --all-targets --all-features -- -D warnings` to keep the codebase warning-free.
+
 ## Contributing
 
 1. Fork the repository
