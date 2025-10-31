@@ -1,0 +1,139 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  labels:
+    app.kubernetes.io/component: node
+    app.kubernetes.io/name: klustre-csi
+  name: klustre-csi-node
+  namespace: klustre-system
+spec:
+  selector:
+    matchLabels:
+      app: klustre-csi-node
+  template:
+    metadata:
+      labels:
+        app: klustre-csi-node
+        app.kubernetes.io/name: klustre-csi
+    spec:
+      containers:
+      - args:
+        - --node-id=$(KUBE_NODE_NAME)
+        - --endpoint=$(CSI_ENDPOINT)
+        - --log-level=$(LOG_LEVEL)
+        env:
+        - name: KUBE_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: CSI_ENDPOINT
+          value: unix:///var/lib/kubelet/plugins/lustre.csi.klustrefs.io/csi.sock
+        - name: LOG_LEVEL
+          value: info
+        - name: PATH
+          value: /host/usr/sbin:/host/sbin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+        - name: LD_LIBRARY_PATH
+          value: /host/lib:/host/lib64:/host/usr/lib:/host/usr/lib64
+        image: ghcr.io/klustrefs/klustre-csi-plugin:0.0.1
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          exec:
+            command:
+            - /usr/local/bin/klustrefs-csi-plugin
+            - --help
+          failureThreshold: 5
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          timeoutSeconds: 5
+        name: klustre-csi
+        resources:
+          limits:
+            cpu: 200m
+            memory: 200Mi
+          requests:
+            cpu: 50m
+            memory: 50Mi
+        securityContext:
+          allowPrivilegeEscalation: true
+          capabilities:
+            add:
+            - SYS_ADMIN
+          privileged: true
+        volumeMounts:
+        - mountPath: /var/lib/kubelet/plugins/lustre.csi.klustrefs.io
+          name: plugin-dir
+        - mountPath: /var/lib/kubelet/pods
+          mountPropagation: Bidirectional
+          name: pods-mount-dir
+        - mountPath: /dev
+          name: device-dir
+        - mountPath: /host/sbin
+          name: host-sbin
+          readOnly: true
+        - mountPath: /host/usr/sbin
+          name: host-usr-sbin
+          readOnly: true
+        - mountPath: /host/lib
+          name: host-lib
+          readOnly: true
+        - mountPath: /host/lib64
+          name: host-lib64
+          readOnly: true
+      - args:
+        - --v=2
+        - --csi-address=/csi/csi.sock
+        - --kubelet-registration-path=/var/lib/kubelet/plugins/lustre.csi.klustrefs.io/csi.sock
+        image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.1
+        name: node-driver-registrar
+        resources:
+          limits:
+            cpu: 200m
+            memory: 200Mi
+          requests:
+            cpu: 100m
+            memory: 200Mi
+        volumeMounts:
+        - mountPath: /csi
+          name: plugin-dir
+        - mountPath: /registration
+          name: registration-dir
+      dnsPolicy: ClusterFirstWithHostNet
+      hostNetwork: true
+      hostPID: true
+      imagePullSecrets:
+      - name: ghcr-secret
+      priorityClassName: system-node-critical
+      serviceAccountName: klustre-csi-node
+      tolerations:
+      - operator: Exists
+      volumes:
+      - hostPath:
+          path: /var/lib/kubelet/plugins/lustre.csi.klustrefs.io
+          type: DirectoryOrCreate
+        name: plugin-dir
+      - hostPath:
+          path: /var/lib/kubelet/plugins_registry
+          type: DirectoryOrCreate
+        name: registration-dir
+      - hostPath:
+          path: /var/lib/kubelet/pods
+          type: Directory
+        name: pods-mount-dir
+      - hostPath:
+          path: /dev
+          type: Directory
+        name: device-dir
+      - hostPath:
+          path: /sbin
+          type: Directory
+        name: host-sbin
+      - hostPath:
+          path: /usr/sbin
+          type: Directory
+        name: host-usr-sbin
+      - hostPath:
+          path: /lib
+        name: host-lib
+      - hostPath:
+          path: /lib64
+        name: host-lib64

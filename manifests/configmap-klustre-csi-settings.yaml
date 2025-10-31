@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: klustre-csi-settings
+  namespace: klustre-system
+data:
+  csiEndpoint: unix:///var/lib/kubelet/plugins/lustre.csi.klustrefs.io/csi.sock
+  driverRegistrationArg: --kubelet-registration-path=/var/lib/kubelet/plugins/lustre.csi.klustrefs.io/csi.sock
+  logLevel: info
+  nodeImage: ghcr.io/klustrefs/klustre-csi-plugin:0.0.1
+  pluginDir: /var/lib/kubelet/plugins/lustre.csi.klustrefs.io
+  priorityClassName: system-node-critical
+  registrarImage: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.1
+  registrationDir: /var/lib/kubelet/plugins_registry
+

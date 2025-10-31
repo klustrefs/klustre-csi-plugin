@@ -1,0 +1,15 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: klustre-csi-static
+allowedTopologies:
+- matchLabelExpressions:
+  - key: lustre.csi.klustrefs.io/lustre-client
+    values:
+    - "true"
+mountOptions:
+- flock
+- user_xattr
+provisioner: lustre.csi.klustrefs.io
+reclaimPolicy: Retain
+volumeBindingMode: WaitForFirstConsumer
