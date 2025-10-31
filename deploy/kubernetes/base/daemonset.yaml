@@ -50,7 +50,7 @@ spec:
                 fieldRef:
                   fieldPath: spec.nodeName
             - name: CSI_ENDPOINT
-              value: unix:///var/lib/kubelet/plugins/klustrefs.csi.k8s.io/csi.sock
+              value: unix:///var/lib/kubelet/plugins/lustre.csi.klustrefs.io/csi.sock
             - name: LOG_LEVEL
               value: info
             - name: PATH
@@ -84,7 +84,7 @@ spec:
 
           volumeMounts:
             - name: plugin-dir
-              mountPath: /var/lib/kubelet/plugins/klustrefs.csi.k8s.io
+              mountPath: /var/lib/kubelet/plugins/lustre.csi.klustrefs.io
             - name: pods-mount-dir
               mountPath: /var/lib/kubelet/pods
               mountPropagation: Bidirectional
@@ -108,7 +108,7 @@ spec:
           args:
             - --v=2
             - --csi-address=/csi/csi.sock
-            - --kubelet-registration-path=/var/lib/kubelet/plugins/klustrefs.csi.k8s.io/csi.sock
+            - --kubelet-registration-path=/var/lib/kubelet/plugins/lustre.csi.klustrefs.io/csi.sock
 
           resources:
             limits:
@@ -127,7 +127,7 @@ spec:
       volumes:
         - name: plugin-dir
           hostPath:
-            path: /var/lib/kubelet/plugins/klustrefs.csi.k8s.io
+            path: /var/lib/kubelet/plugins/lustre.csi.klustrefs.io
             type: DirectoryOrCreate
         - name: registration-dir
           hostPath:

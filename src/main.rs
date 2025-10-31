@@ -14,7 +14,7 @@ mod utils;
 #[command(author, version, about, long_about = None)]
 struct Args {
     /// CSI driver name
-    #[arg(long, default_value = "klustrefs.csi.k8s.io", env = "DRIVER_NAME")]
+    #[arg(long, default_value = "lustre.csi.klustrefs.io", env = "DRIVER_NAME")]
     driver_name: String,
 
     /// Node ID for this instance
@@ -24,7 +24,7 @@ struct Args {
     /// Unix socket endpoint for CSI communication
     #[arg(
         long,
-        default_value = "/var/lib/kubelet/plugins/klustrefs.csi.k8s.io/csi.sock",
+        default_value = "/var/lib/kubelet/plugins/lustre.csi.klustrefs.io/csi.sock",
         env = "CSI_ENDPOINT"
     )]
     endpoint: String,

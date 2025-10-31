@@ -18,4 +18,4 @@ kustomize build deploy/kubernetes/overlays/example
 kustomize build deploy/kubernetes/base | kubectl apply -f -
 ```
 
-Adjust the config-map literals in an overlay to tune images, socket paths, storage class attributes, and other deployment details. The namespace (`klustre-system`) and CSI driver name (`klustrefs.csi.k8s.io`) are fixed in the base manifests.
+Adjust the config-map literals in an overlay to tune images, socket paths, storage class attributes, and other deployment details. The namespace (`klustre-system`) and CSI driver name (`lustre.csi.klustrefs.io`) are fixed in the base manifests.

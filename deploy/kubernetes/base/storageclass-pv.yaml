@@ -2,7 +2,7 @@ apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
   name: klustre-static
-provisioner: klustrefs.csi.k8s.io
+provisioner: lustre.csi.klustrefs.io
 volumeBindingMode: WaitForFirstConsumer
 reclaimPolicy: Retain
 mountOptions:
@@ -10,7 +10,7 @@ mountOptions:
   - user_xattr
 allowedTopologies:
   - matchLabelExpressions:
-      - key: klustre.csi.k8s.io/lustre-client
+      - key: lustre.csi.klustrefs.io/lustre-client
         values:
           - "true"
 ---
@@ -26,7 +26,7 @@ spec:
   persistentVolumeReclaimPolicy: Retain
   storageClassName: klustre-static
   csi:
-    driver: klustrefs.csi.k8s.io
+    driver: lustre.csi.klustrefs.io
     volumeHandle: lustre-volume-example
     volumeAttributes:
       source: YOUR_IP_FOR_LUSTRE@tcp:/testfs

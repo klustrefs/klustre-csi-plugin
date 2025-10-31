@@ -11,9 +11,9 @@ configMapGenerator:
   - name: klustre-csi-settings
     behavior: replace
     literals:
-      - csiEndpoint=unix:///var/lib/kubelet/plugins/klustrefs.csi.k8s.io/csi.sock
-      - pluginDir=/var/lib/kubelet/plugins/klustrefs.csi.k8s.io
-      - driverRegistrationSock=/var/lib/kubelet/plugins/klustrefs.csi.k8s.io/csi.sock
+      - csiEndpoint=unix:///var/lib/kubelet/plugins/lustre.csi.klustrefs.io/csi.sock
+      - pluginDir=/var/lib/kubelet/plugins/lustre.csi.klustrefs.io
+      - driverRegistrationSock=/var/lib/kubelet/plugins/lustre.csi.klustrefs.io/csi.sock
       - registrationDir=/var/lib/kubelet/plugins_registry
       - logLevel=debug
       - nodeImage=ghcr.io/klustrefs/klustre-csi-plugin:v0.1.0

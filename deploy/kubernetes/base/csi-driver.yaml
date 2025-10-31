@@ -1,7 +1,7 @@
 apiVersion: storage.k8s.io/v1
 kind: CSIDriver
 metadata:
-  name: klustrefs.csi.k8s.io
+  name: lustre.csi.klustrefs.io
 spec:
   attachRequired: false
   podInfoOnMount: true
