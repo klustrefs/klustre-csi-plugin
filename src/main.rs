@@ -11,7 +11,7 @@ mod services;
 mod utils;
 
 #[derive(Parser, Debug)]
-#[command(author, version, about, long_about = None)]
+#[command(name = "klustrefs-csi-plugin", author, version, about, long_about = None)]
 struct Args {
     /// CSI driver name
     #[arg(long, default_value = "lustre.csi.klustrefs.io", env = "DRIVER_NAME")]
@@ -44,7 +44,7 @@ async fn main() -> Result<()> {
 
     // Log startup information
     info!(
-        "Starting klustrefs CSI driver v{}",
+        "Starting klustrefs-csi-plugin v{}",
         env!("CARGO_PKG_VERSION")
     );
     info!("Driver name: {}", args.driver_name);

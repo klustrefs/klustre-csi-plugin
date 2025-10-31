@@ -53,6 +53,22 @@ Verify installation:
 kubectl get pods -n klustre-system -l app=klustre-csi-node
 ```
 
+## Building (Developers)
+
+### Prerequisites
+- [Rust](https://rustup.rs/) toolchain (stable)
+- Protocol Buffers compiler (`protoc`)
+  - macOS: `brew install protobuf`
+  - Debian/Ubuntu: `sudo apt-get install -y protobuf-compiler`
+  - Or point the build to a custom binary via `PROTOC=/path/to/protoc`
+
+### Build the driver
+```bash
+make build
+```
+
+The `Makefile` wraps `cargo build --release`; ensure `protoc` is on your `PATH` (or set `PROTOC=/custom/bin/protoc make build`) before invoking it.
+
 ## Contributing
 
 1. Fork the repository

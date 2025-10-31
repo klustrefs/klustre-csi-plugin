@@ -36,25 +36,23 @@ impl CSIServer {
     }
 
     pub async fn start(&self, endpoint: &str) -> Result<()> {
-        let socket_path = endpoint.trim_start_matches("unix://");
+        let socket_path = Path::new(endpoint.trim_start_matches("unix://"));
 
-        if Path::new(socket_path).exists() {
-            info!("Removing existing socket file: {}", socket_path);
+        if socket_path.exists() {
+            info!("Removing existing socket file: {}", socket_path.display());
             fs::remove_file(socket_path).await?;
         }
 
-        if let Some(parent) = Path::new(socket_path).parent()
-            && !parent.exists()
-        {
+        if let Some(parent) = socket_path.parent().filter(|parent| !parent.exists()) {
             info!("Creating socket directory: {}", parent.display());
             fs::create_dir_all(parent).await?;
         }
 
-        info!("Binding to Unix socket: {}", socket_path);
+        info!("Binding to Unix socket: {}", socket_path.display());
         let uds = UnixListener::bind(socket_path)?;
         let uds_stream = UnixListenerStream::new(uds);
 
-        info!("CSI gRPC server listening on {}", socket_path);
+        info!("CSI gRPC server listening on {}", socket_path.display());
         info!("Ready to accept CSI requests");
 
         Server::builder()
