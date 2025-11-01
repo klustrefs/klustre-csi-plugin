@@ -1,8 +1,7 @@
 use anyhow::Result;
 use clap::Parser;
-use tracing::{Level, error, info};
-use tracing_subscriber::FmtSubscriber;
-
+use tracing::{error, info};
+use tracing_subscriber::layer::Layer;
 mod config;
 mod csi_types;
 mod lustre;
@@ -32,6 +31,13 @@ struct Args {
     /// Log level (trace, debug, info, warn, error)
     #[arg(long, default_value = "info", env = "LOG_LEVEL")]
     log_level: String,
+
+    #[arg(long, default_value = "plain", env = "LOG_FORMAT")]
+    log_format: String,
+
+    /// read RUST_LOG if present
+    #[arg(long, default_value = "", env = "RUST_LOG")]
+    _ignored_rust_log: String,
 }
 
 #[tokio::main]
@@ -40,7 +46,7 @@ async fn main() -> Result<()> {
     let args = Args::parse();
 
     // Initialize tracing subscriber
-    setup_tracing(&args.log_level)?;
+    setup_tracing(&args.log_level, &args.log_format)?;
 
     // Log startup information
     info!(
@@ -67,27 +73,47 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-fn setup_tracing(log_level: &str) -> Result<()> {
-    // Parse log level
-    let level = match log_level.to_lowercase().as_str() {
-        "trace" => Level::TRACE,
-        "debug" => Level::DEBUG,
-        "info" => Level::INFO,
-        "warn" => Level::WARN,
-        "error" => Level::ERROR,
-        _ => Level::INFO,
+pub fn setup_tracing(log_level: &str, log_format: &str) -> Result<()> {
+    use std::io;
+    use tracing_error::ErrorLayer;
+    use tracing_subscriber::{
+        EnvFilter, Registry, fmt, layer::SubscriberExt, util::SubscriberInitExt,
     };
 
-    // Build the subscriber
-    let subscriber = FmtSubscriber::builder()
-        .with_max_level(level)
+    // Build filter from RUST_LOG/LOG_LEVEL; fallback to provided level.
+    let filter = EnvFilter::try_from_default_env()
+        .or_else(|_| EnvFilter::try_new(format!("{}{}", "info,", log_level)))
+        .unwrap_or_else(|_| EnvFilter::new("info"));
+
+    // Write logs to stdout
+    let is_tty = atty::is(atty::Stream::Stdout);
+
+    // Common formatter options (writer, metadata, timestamp).
+    let base = fmt::layer()
+        .with_writer(io::stdout)
         .with_target(true)
         .with_thread_ids(true)
         .with_line_number(true)
-        .finish();
+        .with_file(true)
+        .with_ansi(is_tty) // no ANSI in non-TTY (pods/log shippers)
+        .with_timer(fmt::time::UtcTime::rfc_3339());
 
-    // Set the global subscriber
-    tracing::subscriber::set_global_default(subscriber)?;
+    let fmt_layer = if log_format.eq_ignore_ascii_case("json") {
+        base.json()
+            .flatten_event(true)
+            .with_current_span(true)
+            .with_span_list(true)
+            .boxed()
+    } else {
+        base.compact().boxed() // single-line compact text
+    };
+
+    // Compose registry + filters + formatter + error contexts.
+    Registry::default()
+        .with(filter)
+        .with(fmt_layer)
+        .with(ErrorLayer::default())
+        .init();
 
     Ok(())
 }
