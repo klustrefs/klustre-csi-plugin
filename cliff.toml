@@ -49,7 +49,7 @@ body = """
 {% for group, commits in commits | group_by(attribute="group") %}
 ### {{ group | upper_first }}
 {% for commit in commits %}
-- {{ commit.message | first_line }} ({{ commit.id | truncate(length=7) }})
+- {{ commit.message | split(pat="\n") | first }} ({{ commit.id | truncate(length=7) }})
 {% endfor %}
 
 {% endfor %}
