@@ -54,11 +54,9 @@ jobs:
       - name: Load release notes
         id: notes
         run: |
-          {
-            echo "RELEASE_NOTES<<'EOF'"
-            cat RELEASE_NOTES.md
-            echo "EOF"
-          } >> "${GITHUB_OUTPUT}"
+          echo "RELEASE_NOTES<<EOF" >> "${GITHUB_OUTPUT}"
+          cat RELEASE_NOTES.md >> "${GITHUB_OUTPUT}"
+          echo "EOF" >> "${GITHUB_OUTPUT}"
 
       - name: Create GitHub release
         uses: actions/github-script@v7
