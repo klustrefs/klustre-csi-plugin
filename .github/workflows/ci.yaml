@@ -20,6 +20,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Install protobuf compiler
+        uses: arduino/setup-protoc@v2
+        with:
+          version: "25.1"
+
       - name: Set up Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
