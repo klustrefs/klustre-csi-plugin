@@ -1,0 +1,57 @@
+[git]
+conventional_commits = true
+filter_unconventional = true
+
+[[git.commit_types]]
+type = "feat"
+title = "Features"
+
+[[git.commit_types]]
+type = "fix"
+title = "Bug Fixes"
+
+[[git.commit_types]]
+type = "perf"
+title = "Performance"
+
+[[git.commit_types]]
+type = "refactor"
+title = "Refactoring"
+
+[[git.commit_types]]
+type = "docs"
+title = "Documentation"
+
+[[git.commit_types]]
+type = "test"
+title = "Tests"
+
+[[git.commit_types]]
+type = "build"
+title = "Build"
+
+[[git.commit_types]]
+type = "ci"
+title = "CI"
+
+[[git.commit_types]]
+type = "chore"
+title = "Chore"
+
+[changelog]
+header = ""
+body = """
+{% if version %}## {{ version }} - {{ timestamp | date(format="%Y-%m-%d") }}
+
+{% else %}## Unreleased
+
+{% endif %}
+{% for group, commits in commits | group_by(attribute="group") %}
+### {{ group | upper_first }}
+{% for commit in commits %}
+- {{ commit.message | first_line }} ({{ commit.id | truncate(length=7) }})
+{% endfor %}
+
+{% endfor %}
+"""
+footer = ""
