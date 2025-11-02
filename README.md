@@ -1,85 +1,125 @@
-# KlustreFS CSI Driver
+<p align="center">
+  <img src="static/klustre_logo_black.svg" alt="KlustreFS logo" width="320">
+</p>
 
-A [Container Storage Interface (CSI)](https://kubernetes-csi.github.io/docs/) driver for Lustre parallel filesystems, enabling Kubernetes workloads to use high-performance Lustre storage.
+# Klustre CSI Plugin
 
+[![CI](https://github.com/klustrefs/klustre-csi-plugin/actions/workflows/build-and-push.yaml/badge.svg)](https://github.com/klustrefs/klustre-csi-plugin/actions/workflows/build-and-push.yaml)
+[![Rust Code Quality](https://img.shields.io/badge/Rust%20Code%20Quality-Clippy-success?logo=rust&logoColor=white)](https://doc.rust-lang.org/stable/clippy/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
-## Features
+A [Container Storage Interface (CSI)](https://kubernetes-csi.github.io/docs/) plugin for Lustre parallel file systems, allowing Kubernetes workloads to use high-performance Lustre storage backends.
 
-- ✅ **Static Provisioning** - Mount existing Lustre filesystems
-- ✅ **ReadWriteMany (RWX)** - Multiple pods can access the same volume simultaneously
-- ✅ **High Performance** - Leverage Lustre's parallel I/O capabilities
-- ✅ **Broad Compatibility** - Uses nsenter to work with various container runtimes and base images
-- ✅ **Kubernetes Native** - Standard CSI interface, works with any Kubernetes cluster
+## Overview
 
-## How It Works
+The KlustreFS CSI plugin connects Kubernetes workloads to Lustre shares by using the
+Lustre client available on worker nodes to mount and unmount whenever a PersistentVolume and
+PersistentVolumeClaim are created or deleted.
 
-The driver uses `nsenter` to execute mount operations in the host's mount namespace, allowing it to work with:
+### Current Capabilities
 
-- **Alpine-based containers** - No glibc compatibility issues
-- **Minimal images** - Doesn't require Lustre utilities inside the container
-- **Any base image** - Works regardless of container distro
-- **Standard Kubernetes** - No special node configuration needed
+- Mounts and unmounts Lustre shares on Kubernetes worker nodes using the Lustre client.
+- Supports Lustre's `ReadWriteMany` semantics for workloads that share mounts across pods.
 
-## Architecture
+### Limitations
 
-The CSI driver consists of two main components:
-
-- **Node Plugin** (DaemonSet) - Runs on every Kubernetes worker node, handles mount operations
-- **Controller Plugin** (Deployment) - Manages volume lifecycle (create/delete operations)
+- Dynamic provisioning workflows (`CreateVolume`, `DeleteVolume`, `ControllerPublish` / `Unpublish`).
+- Snapshots, expansion, and metrics (`CreateSnapshot`, `NodeExpandVolume`, `NodeGetVolumeStats`, etc.).
 
 ## Prerequisites
-### Lustre Requirements
 
-- Lustre filesystem deployed and accessible via LNET
-- Lustre client software installed on all Kubernetes worker nodes
-- Network connectivity between Kubernetes nodes and Lustre MGS/OSTs
+### Kubernetes Cluster
 
-### Kubernetes Requirements
+- Kubernetes 1.20+ with the CSI spec v1.5 or newer.
+- The API server and kubelets must allow privileged pods.
 
-- Kubernetes 1.20+
-- CSI spec 1.5.0+
-- `--allow-privileged` flag enabled on API server and kubelets
+### Worker Nodes
 
-## Installation
+- Lustre client packages installed (`mount.lustre`, kernel modules, etc.).
+- Network connectivity to the Lustre shares.
 
-Deploy the CSI driver:
+## Quick Start
+
+Use the Kubernetes manifests provided in `manifests/` or Helm chart from the `klustrefs/helm-charts` repository if you prefer Helm.
+
 ```bash
-kubectl apply -k deploy/kubernetes/base/
+kubectl apply -f manifests/
 ```
 
-Verify installation:
+Validate the rollout:
+
 ```bash
-kubectl get pods -n klustre-system -l app=klustre-csi-node
+kubectl get pods -n klustre-system
 ```
 
-## Building (Developers)
+### Mount an Existing Lustre Share
 
-### Prerequisites
-- [Rust](https://rustup.rs/) toolchain (stable)
-- Protocol Buffers compiler (`protoc`)
-  - macOS: `brew install protobuf`
-  - Debian/Ubuntu: `sudo apt-get install -y protobuf-compiler`
-  - Or point the build to a custom binary via `PROTOC=/path/to/protoc`
+Define a PersistentVolume that points at your Lustre export and bind it with a PersistentVolumeClaim.
+When a pod uses that PVC, the driver reads `volumeAttributes.source` (for example
+`10.0.0.1@tcp0:/lustre-fs`) and mounts the share inside the container.
 
-### Build the driver
-```bash
-make build
+```yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: lustre-static-pv
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  csi:
+    driver: lustre.csi.klustrefs.io
+    volumeHandle: lustre-static-pv
+    volumeAttributes:
+      source: 10.0.0.1@tcp0:/lustre-fs
+      mountOptions: flock,user_xattr
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: lustre-static-pvc
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+  volumeName: lustre-static-pv
+  storageClassName: "klustre-csi-static"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lustre-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lustre-demo
+  template:
+    metadata:
+      labels:
+        app: lustre-demo
+    spec:
+      containers:
+        - name: app
+          image: busybox
+          command: ["sleep", "infinity"]
+          volumeMounts:
+            - name: lustre-share
+              mountPath: /mnt/lustre
+      volumes:
+        - name: lustre-share
+          persistentVolumeClaim:
+            claimName: lustre-static-pvc
 ```
 
-The `Makefile` wraps `cargo build --release`; ensure `protoc` is on your `PATH` (or set `PROTOC=/custom/bin/protoc make build`) before invoking it.
+## Development & Contributing
 
-### Lint the code
-```bash
-make lint
-```
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for build/lint instructions, container image workflows, command-line argument reference, and contribution guidelines.
 
-This runs `cargo clippy --all-targets --all-features -- -D warnings` to keep the codebase warning-free.
+## License
 
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+Licensed under the [Apache License, Version 2.0](LICENSE).
