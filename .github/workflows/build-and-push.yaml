@@ -1,7 +1,17 @@
 # Build and push the Klustre CSI container image to GHCR.
 name: Build and Push Image
 
+permissions:
+  contents: read
+  packages: write
+
 on:
+  push:
+    branches:
+      - main
+      - release-*
+    tags:
+      - v*
   release:
     types:
       - published
@@ -20,9 +30,6 @@ env:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
 
     steps:
       - name: Checkout repository
