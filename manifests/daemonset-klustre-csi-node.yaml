@@ -34,7 +34,7 @@ spec:
           value: /host/usr/sbin:/host/sbin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
         - name: LD_LIBRARY_PATH
           value: /host/lib:/host/lib64:/host/usr/lib:/host/usr/lib64
-        image: ghcr.io/klustrefs/klustre-csi-plugin:0.0.1
+        image: ghcr.io/klustrefs/klustre-csi-plugin:0.1.1
         imagePullPolicy: IfNotPresent
         livenessProbe:
           exec:
