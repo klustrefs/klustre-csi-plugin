@@ -16,6 +16,8 @@ spec:
         app: klustre-csi-node
         app.kubernetes.io/name: klustre-csi
     spec:
+      nodeSelector:
+        lustre.csi.klustrefs.io/lustre-client: "true"
       containers:
       - args:
         - --node-id=$(KUBE_NODE_NAME)
@@ -27,9 +29,15 @@ spec:
             fieldRef:
               fieldPath: spec.nodeName
         - name: CSI_ENDPOINT
-          value: unix:///var/lib/kubelet/plugins/lustre.csi.klustrefs.io/csi.sock
+          valueFrom:
+            configMapKeyRef:
+              name: klustre-csi-settings
+              key: csiEndpoint
         - name: LOG_LEVEL
-          value: info
+          valueFrom:
+            configMapKeyRef:
+              name: klustre-csi-settings
+              key: logLevel
         - name: PATH
           value: /host/usr/sbin:/host/sbin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
         - name: LD_LIBRARY_PATH
@@ -82,7 +90,13 @@ spec:
       - args:
         - --v=2
         - --csi-address=/csi/csi.sock
-        - --kubelet-registration-path=/var/lib/kubelet/plugins/lustre.csi.klustrefs.io/csi.sock
+        - $(DRIVER_REGISTRATION_ARG)
+        env:
+        - name: DRIVER_REGISTRATION_ARG
+          valueFrom:
+            configMapKeyRef:
+              name: klustre-csi-settings
+              key: driverRegistrationArg
         image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.1
         name: node-driver-registrar
         resources:
@@ -100,8 +114,6 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       hostNetwork: true
       hostPID: true
-      imagePullSecrets:
-      - name: ghcr-secret
       priorityClassName: system-node-critical
       serviceAccountName: klustre-csi-node
       tolerations:
