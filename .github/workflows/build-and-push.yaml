@@ -6,26 +6,23 @@ permissions:
   packages: write
 
 on:
-  push:
-    branches:
-      - main
-      - release-*
-    tags:
-      - v*
-  release:
-    types:
-      - published
+  workflow_call:
+    inputs:
+      image_tag:
+        description: "SemVer tag for the pushed image (example: v0.0.1). When omitted, defaults to 'dev'."
+        required: false
+        type: string
   workflow_dispatch:
     inputs:
       image_tag:
-        description: "SemVer tag for the pushed image (example: v0.0.1). Defaults to v0.0.1 when omitted."
+        description: "SemVer tag for the pushed image (example: v0.0.1). Defaults to 'dev' when omitted."
         required: false
-        default: v0.0.1
+        default: dev
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: klustrefs/klustre-csi-plugin
-  DEFAULT_IMAGE_TAG: v0.0.1
+  DEFAULT_IMAGE_TAG: dev
 
 jobs:
   build-and-push:
@@ -38,24 +35,27 @@ jobs:
       - name: Determine image tag
         id: vars
         run: |
-          if [ "${{ github.event_name }}" = "release" ]; then
-            VERSION="${{ github.event.release.tag_name }}"
-          elif [ -n "${{ github.event.inputs.image_tag }}" ]; then
+          if [ -n "${{ github.event.inputs.image_tag }}" ]; then
             VERSION="${{ github.event.inputs.image_tag }}"
           else
             VERSION="${DEFAULT_IMAGE_TAG}"
           fi
 
-          if ! echo "${VERSION}" | grep -Eq '^v?[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'; then
-            echo "Provided version '${VERSION}' is not a valid semver (allowing optional leading 'v')." >&2
-            exit 1
+          if [ "${VERSION}" = "dev" ]; then
+            IMAGE_TAG="dev"
+          else
+            if ! echo "${VERSION}" | grep -Eq '^v?[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'; then
+              echo "Provided version '${VERSION}' is not a valid semver (allowing optional leading 'v')." >&2
+              exit 1
+            fi
+
+            # Normalise to always include leading 'v' when tagging the image.
+            CLEAN_VERSION="${VERSION#v}"
+            IMAGE_TAG="v${CLEAN_VERSION}"
           fi
 
-          # Normalise to strip leading 'v' when tagging the image.
-          CLEAN_VERSION="${VERSION#v}"
-
-          echo "IMAGE_TAG=${CLEAN_VERSION}" >> "${GITHUB_ENV}"
-          echo "Resolved image tag: ${CLEAN_VERSION}"
+          echo "IMAGE_TAG=${IMAGE_TAG}" >> "${GITHUB_ENV}"
+          echo "Resolved image tag: ${IMAGE_TAG}"
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3

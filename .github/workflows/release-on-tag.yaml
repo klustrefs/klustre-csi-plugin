@@ -1,5 +1,9 @@
-# Create a GitHub release whenever a SemVer tag is pushed.
+# Create a GitHub release whenever a SemVer tag is pushed and build/push the image.
 name: Create Release from Tag
+
+permissions:
+  contents: write
+  packages: write
 
 on:
   push:
@@ -14,8 +18,9 @@ jobs:
   create-release:
     needs: ci-checks
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
+    outputs:
+      tag: ${{ steps.semver.outputs.tag }}
+      version: ${{ steps.semver.outputs.version }}
 
     steps:
       - name: Validate SemVer tag
@@ -88,3 +93,10 @@ jobs:
                 throw error;
               }
             }
+
+  build-and-push-image:
+    needs: create-release
+    uses: ./.github/workflows/build-and-push.yaml
+    secrets: inherit
+    with:
+      image_tag: ${{ needs.create-release.outputs.tag }}
