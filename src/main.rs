@@ -1,5 +1,6 @@
 use anyhow::Result;
 use clap::Parser;
+use std::io::IsTerminal;
 use tracing::{error, info};
 use tracing_subscriber::layer::Layer;
 mod config;
@@ -86,7 +87,7 @@ pub fn setup_tracing(log_level: &str, log_format: &str) -> Result<()> {
         .unwrap_or_else(|_| EnvFilter::new("info"));
 
     // Write logs to stdout
-    let is_tty = atty::is(atty::Stream::Stdout);
+    let is_tty = io::stdout().is_terminal();
 
     // Common formatter options (writer, metadata, timestamp).
     let base = fmt::layer()
