@@ -120,6 +120,10 @@ spec:
 
 See [`CONTRIBUTING.md`](CONTRIBUTING.md) for build/lint instructions, container image workflows, command-line argument reference, and contribution guidelines.
 
+## Authors
+
+- **[Samet Demir](https://github.com/sametd)**
+- **[Armagan Karatosun](https://github.com/armagankaratosun)**
 ## License
 
 Licensed under the [Apache License, Version 2.0](LICENSE).
