@@ -10,3 +10,6 @@ resources:
   - daemonset-klustre-csi-node.yaml
   - storageclass-klustre-static.yaml
 
+images:
+  - name: ghcr.io/klustrefs/klustre-csi-plugin
+    newTag: v0.1.1

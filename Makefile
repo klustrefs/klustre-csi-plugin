@@ -5,7 +5,7 @@ PLATFORMS ?= linux/amd64,linux/arm64
 BUILD_DIR ?= build
 VERSION ?=
 
-.PHONY: deps build fmt fmt-fix lint test image image-multiarch clean tag tag-push tag-delete tag-repush release
+.PHONY: deps build fmt fmt-fix lint test image image-multiarch clean check-manifest-version tag tag-push tag-delete tag-repush release
 
 deps:
 	cargo fetch
@@ -60,9 +60,22 @@ clean:
 	cargo clean
 	rm -rf $(BUILD_DIR)
 
+check-manifest-version:
+	@if [ -z "$(VERSION)" ]; then echo "ERROR: VERSION is required (e.g., VERSION=v0.1.0)" >&2; exit 1; fi
+	@IMAGE_TAG=$$(grep -A2 'name: ghcr.io/klustrefs/klustre-csi-plugin' manifests/kustomization.yaml | grep 'newTag:' | awk '{print $$2}'); \
+	if [ -z "$$IMAGE_TAG" ]; then \
+	  echo "ERROR: Could not determine image tag from manifests/kustomization.yaml" >&2; exit 1; \
+	fi; \
+	if [ "$$IMAGE_TAG" != "$(VERSION)" ]; then \
+	  echo "ERROR: Image tag in manifests/kustomization.yaml ($$IMAGE_TAG) does not match VERSION ($(VERSION))." >&2; \
+	  echo "Update manifests/kustomization.yaml images.newTag before tagging a release." >&2; \
+	  exit 1; \
+	fi
+
 tag:
 	@if [ -z "$(VERSION)" ]; then echo "ERROR: VERSION is required (e.g., VERSION=v0.1.0)" >&2; exit 1; fi
 	@case "$(VERSION)" in v*) ;; *) echo "ERROR: VERSION must be v-prefixed (e.g., v0.1.0)" >&2; exit 1;; esac
+	@$(MAKE) check-manifest-version VERSION=$(VERSION)
 	@if git status --porcelain | grep -q '.'; then echo "ERROR: Working tree is not clean." >&2; exit 1; fi
 	@if git rev-parse -q --verify "refs/tags/$(VERSION)" >/dev/null; then \
 	  echo "ERROR: Tag $(VERSION) already exists." >&2; exit 1; \
@@ -72,6 +85,7 @@ tag:
 
 tag-push:
 	@if [ -z "$(VERSION)" ]; then echo "ERROR: VERSION is required (e.g., VERSION=v0.1.0)" >&2; exit 1; fi
+	@$(MAKE) check-manifest-version VERSION=$(VERSION)
 	@if ! git rev-parse -q --verify "refs/tags/$(VERSION)" >/dev/null; then \
 	  echo "ERROR: Tag $(VERSION) not found. Create it first: make tag VERSION=$(VERSION)" >&2; exit 1; \
 	fi

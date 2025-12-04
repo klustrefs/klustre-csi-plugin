@@ -45,6 +45,22 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Ensure manifests image tag matches release tag
+        run: |
+          EXPECTED_TAG='${{ steps.semver.outputs.tag }}'
+          IMAGE_TAG=$(grep -A2 'name: ghcr.io/klustrefs/klustre-csi-plugin' manifests/kustomization.yaml | grep 'newTag:' | awk '{print $2}')
+
+          if [ -z "${IMAGE_TAG}" ]; then
+            echo "Could not determine image tag from manifests/kustomization.yaml" >&2
+            exit 1
+          fi
+
+          if [ "${IMAGE_TAG}" != "${EXPECTED_TAG}" ]; then
+            echo "Image tag in manifests/kustomization.yaml (${IMAGE_TAG}) does not match release tag (${EXPECTED_TAG})." >&2
+            echo "Update manifests/kustomization.yaml images.newTag before tagging a release." >&2
+            exit 1
+          fi
+
       - name: Generate release notes
         id: cliff
         uses: orhun/git-cliff-action@v4

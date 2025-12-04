@@ -33,6 +33,11 @@ RUN file /build/target/x86_64-unknown-linux-musl/release/klustrefs-csi-plugin &&
 # Runtime stage - minimal Alpine
 FROM alpine:3.22
 
+# OCI image metadata
+LABEL org.opencontainers.image.description="KlustreFS CSI plugin for Kubernetes"
+LABEL org.opencontainers.image.source="https://github.com/klustrefs/klustre-csi-plugin"
+
+
 # Install only essential runtime tools
 RUN apk add --no-cache \
     ca-certificates \

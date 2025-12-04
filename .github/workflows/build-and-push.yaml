@@ -34,9 +34,14 @@ jobs:
 
       - name: Determine image tag
         id: vars
+        env:
+          WORKFLOW_INPUT_IMAGE_TAG: ${{ inputs.image_tag }}
+          DISPATCH_INPUT_IMAGE_TAG: ${{ github.event.inputs.image_tag }}
         run: |
-          if [ -n "${{ github.event.inputs.image_tag }}" ]; then
-            VERSION="${{ github.event.inputs.image_tag }}"
+          if [ -n "${WORKFLOW_INPUT_IMAGE_TAG}" ]; then
+            VERSION="${WORKFLOW_INPUT_IMAGE_TAG}"
+          elif [ -n "${DISPATCH_INPUT_IMAGE_TAG}" ]; then
+            VERSION="${DISPATCH_INPUT_IMAGE_TAG}"
           else
             VERSION="${DEFAULT_IMAGE_TAG}"
           fi
